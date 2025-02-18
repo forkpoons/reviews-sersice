@@ -1,0 +1,49 @@
+version: "3.8"
+
+name: itemcloud-reviews-${REFNAME:-local}
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "1024k"
+    max-file: "10"
+
+x-services-defaults: &services_defaults
+  restart: always
+  env_file: .env
+  networks:
+    - internal
+  logging: *default-logging
+
+services:
+  app:
+    <<: *services_defaults
+    build: .
+    container_name: itemCloudReviewsBackend
+    command: make run
+    volumes:
+      - ./:/app
+    ports:
+      - "8080:8080"
+    expose:
+      - 8080
+    tty: true
+
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "reviews"
+      POSTGRES_USER: "reviews"
+      POSTGRES_PASSWORD: "pgpwdreviews"
+    expose:
+      - 5432
+    networks:
+      - internal
+    <<: *services_defaults
+
+networks:
+  nginx_default:
+    external: true
+  internal:
+    name: itemcloud-reviews-${REFNAME:-local}

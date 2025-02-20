@@ -17,7 +17,6 @@ import (
 
 	"github.com/forkpoons/library/pg"
 	"github.com/forkpoons/library/probes"
-	"github.com/forkpoons/library/tracing"
 	"github.com/forkpoons/library/yamlreader"
 	"github.com/forkpoons/library/zerohook"
 )
@@ -31,8 +30,8 @@ func main() {
 		zerohook.Logger.Fatal().Msgf("Error initializing PostgreSQL connection: %v", err)
 	}
 	promoRepo := repository.NewPromo(ctx, pgConn.Pool(), zerohook.Logger)
-	probes := probes.NewProbe(ctx, &cfg.App.Probe)
-	go probes.Start()
+	probe := probes.NewProbe(ctx, &cfg.App.Probe)
+	go probe.Start()
 	api := apiService.NewService(zerohook.Logger, promoRepo, cfg.App.Secret)
 
 	go api.Start(ctx)

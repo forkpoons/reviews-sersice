@@ -19,7 +19,7 @@ x-services-defaults: &services_defaults
 services:
   app:
     <<: *services_defaults
-    build: .
+    build:  docker/.
     container_name: itemCloudReviewsBackend
     command: make run
     volumes:

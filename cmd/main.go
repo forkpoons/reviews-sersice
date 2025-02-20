@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/ItemCloudShopping/library/pg"
 	"github.com/forkpoons/reviews-sersice/internal/config"
 	"github.com/forkpoons/reviews-sersice/internal/repository"
 	apiService "github.com/forkpoons/reviews-sersice/internal/service/api"
@@ -13,13 +12,14 @@ import (
 	_ "regexp"
 	"syscall"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
+	_ "github.com/prometheus/client_golang/prometheus"
+	_ "github.com/prometheus/client_golang/prometheus/collectors"
 
-	"github.com/ItemCloudShopping/library/probes"
-	"github.com/ItemCloudShopping/library/tracing"
-	"github.com/ItemCloudShopping/library/yamlreader"
-	"github.com/ItemCloudShopping/library/zerohook"
+	"github.com/forkpoons/library/pg"
+	"github.com/forkpoons/library/probes"
+	"github.com/forkpoons/library/tracing"
+	"github.com/forkpoons/library/yamlreader"
+	"github.com/forkpoons/library/zerohook"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-package service
+package api
 
 import (
 	"github.com/fasthttp/router"

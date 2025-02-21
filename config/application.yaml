@@ -1,0 +1,31 @@
+log:
+  app: ${SPACE}_${PROJECT}
+  level: ${LOG_LEVEL}
+  facility: ItemCloud_Promo
+  ci_commit_ref_name: zero
+  origin: dev
+
+app:
+  secret: ${APP_SECRET}
+  probe:
+    probe_port: ${PROBE_PORT}
+    wait_start_up_time: 10
+    wait_liveness_time: 10
+    wait_readiness_time: 10
+
+api:
+  port: ${API_PORT}
+
+postgres:
+  conn: ${POSTGRES_DSN}
+
+kafka:
+  broker: ${KAFKA_BROKER}
+  topic: ${KAFKA_TOPIC}
+  group_id: ${KAFKA_GROUP_ID}
+  max_retries: 0
+
+jaeger:
+  agent_host: ${JAEGER_AGENT_HOST}
+  agent_port: ${JAEGER_AGENT_PORT}
+  service_name: ${JAEGER_SERVICE_NAME}

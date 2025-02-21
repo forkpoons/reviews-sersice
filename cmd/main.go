@@ -24,7 +24,7 @@ import (
 func main() {
 	ctx := context.Background()
 	cfg := MustNewConfig(parseFlags(), zerohook.Logger)
-
+	zerohook.Logger.Println(cfg.Postgres.Conn.Value)
 	pgConn, err := pg.NewPG(ctx, cfg.Postgres.Conn.Value, zerohook.Logger)
 	if err != nil {
 		zerohook.Logger.Fatal().Msgf("Error initializing PostgreSQL connection: %v", err)

@@ -36,8 +36,10 @@ services:
       POSTGRES_DB: "reviews"
       POSTGRES_USER: "reviews"
       POSTGRES_PASSWORD: "pgpwdreviews"
+    ports:
+      - "5480:5432"
     expose:
-      - 5432
+      - 5480
     networks:
       - internal
     <<: *services_defaults

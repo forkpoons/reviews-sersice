@@ -24,7 +24,7 @@ import (
 func main() {
 	ctx := context.Background()
 	cfg := MustNewConfig(parseFlags(), zerohook.Logger)
-	zerohook.Logger.Println(cfg.Postgres.Conn.Value)
+
 	pgConn, err := pg.NewPG(ctx, cfg.Postgres.Conn.Value, zerohook.Logger)
 	if err != nil {
 		zerohook.Logger.Fatal().Msgf("Error initializing PostgreSQL connection: %v", err)
@@ -32,9 +32,16 @@ func main() {
 	promoRepo := repository.NewPromo(ctx, pgConn.Pool(), zerohook.Logger)
 	probe := probes.NewProbe(ctx, &cfg.App.Probe)
 	go probe.Start()
+	if err != nil {
+		zerohook.Logger.Fatal().Msgf("Error starting probe: %v", err)
+	}
+	zerohook.Logger.Debug().Msgf("Starting server")
 	api := apiService.NewService(zerohook.Logger, promoRepo, cfg.App.Secret)
-
 	go api.Start(ctx)
+	if err != nil {
+		zerohook.Logger.Fatal().Msgf("Error starting API: %v", err)
+	}
+	zerohook.Logger.Debug().Msgf("Starting server2")
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit

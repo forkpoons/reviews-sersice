@@ -5,9 +5,11 @@ go 1.23.4
 require (
 	github.com/fasthttp/router v1.5.4
 	github.com/forkpoons/library v0.0.0-20250220174145-4a6fd33c3e82
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rs/zerolog v1.33.0
+	github.com/valyala/fasthttp v1.58.0
 )
 
 require (
@@ -31,7 +33,6 @@ require (
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.58.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect

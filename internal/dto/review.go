@@ -3,6 +3,7 @@ package dto
 import "github.com/google/uuid"
 
 type Review struct {
+	ID         uuid.UUID `json:"id"`
 	ReviewType string    `json:"review_type"`
 	UserID     uuid.UUID `json:"user_id"`
 	ReviewText string    `json:"review_text"`

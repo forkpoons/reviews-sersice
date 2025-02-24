@@ -21,7 +21,7 @@ type AppConfig struct {
 type Config struct {
 	Log      zerohook.LoggerConfig `yaml:"log"`
 	App      AppConfig             `yaml:"app"`
-	Api      ApiConfig             `yaml:"api"`
+	Api      ApiConfig             `yaml:"userAPI"`
 	Postgres pg.PostgresConfig     `yaml:"postgres"`
 	Kafka    struct {
 		Broker     *yamlenv.Env[string] `yaml:"broker"`

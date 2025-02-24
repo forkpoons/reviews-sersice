@@ -1,4 +1,4 @@
-package api
+package userAPI
 
 import (
 	"bytes"
@@ -13,10 +13,10 @@ import (
 )
 
 type reviewRepo interface {
-	GetReview(ctx context.Context, id uuid.UUID) (*dto.Review, error)
+	GetReviews(ctx context.Context, id uuid.UUID) (*[]dto.Review, error)
 	AddReview(ctx context.Context, review dto.Review) error
 	EditReview(ctx context.Context, review dto.Review) error
-	DeleteReview(ctx context.Context, review dto.Review) error
+	DeleteReview(ctx context.Context, id uuid.UUID) error
 }
 
 type Service struct {
@@ -67,7 +67,7 @@ func (s *Service) GetReview(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetReview(ctx, productID)
+	review, err := s.reviewRepo.GetReviews(ctx, productID)
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -81,9 +81,7 @@ func (s *Service) GetReview(ctx *fasthttp.RequestCtx) {
 func (s *Service) AddReview(ctx *fasthttp.RequestCtx) {
 	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
 	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{
-		ReviewType: "review",
-	}
+	review := dto.Review{}
 	if err := decoder.Decode(&review); err != nil {
 		s.log.Error().Err(err).Send()
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
@@ -101,9 +99,7 @@ func (s *Service) AddReview(ctx *fasthttp.RequestCtx) {
 func (s *Service) EditReview(ctx *fasthttp.RequestCtx) {
 	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
 	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{
-		ReviewType: "review",
-	}
+	review := dto.Review{}
 	if err := decoder.Decode(&review); err != nil {
 		s.log.Error().Err(err).Send()
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
@@ -119,21 +115,15 @@ func (s *Service) EditReview(ctx *fasthttp.RequestCtx) {
 }
 
 func (s *Service) DeleteReview(ctx *fasthttp.RequestCtx) {
-	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
-	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{
-		ReviewType: "review",
-	}
-	if err := decoder.Decode(&review); err != nil {
-		s.log.Error().Err(err).Send()
-		ctx.Response.SetStatusCode(http.StatusBadRequest)
-		return
-	}
-
-	err := s.reviewRepo.DeleteReview(ctx, review)
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
 	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-
+	err = s.reviewRepo.DeleteReview(ctx, productID)
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
 	ctx.Response.SetStatusCode(http.StatusCreated)
 }

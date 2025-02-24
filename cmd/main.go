@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/forkpoons/reviews-sersice/internal/config"
 	"github.com/forkpoons/reviews-sersice/internal/repository"
-	apiService "github.com/forkpoons/reviews-sersice/internal/service/api"
+	apiService "github.com/forkpoons/reviews-sersice/internal/service/userAPI"
 	"github.com/rs/zerolog"
 	"os"
 	"os/signal"
@@ -21,6 +21,7 @@ import (
 	"github.com/forkpoons/library/zerohook"
 )
 
+// psql -h 127.0.0.1 -p 5432 -U reviews -d reviews
 func main() {
 	ctx := context.Background()
 	cfg := MustNewConfig(parseFlags(), zerohook.Logger)

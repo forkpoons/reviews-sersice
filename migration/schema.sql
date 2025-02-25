@@ -14,3 +14,13 @@ CREATE TABLE "reviews"
     "status"      reviews_status
 );
 
+CREATE TABLE "answers"
+(
+    "id"          uuid PRIMARY KEY,
+    "answer_text" varchar NOT NULL,
+    "user_id"     uuid    NOT NULL,
+    "created_at"  timestamptz,
+    "updated_at"  timestamptz,
+    "question_id"  uuid,
+    "status"      reviews_status
+);

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/forkpoons/reviews-sersice/internal/dto"
 	"github.com/google/uuid"
@@ -21,6 +20,24 @@ type Review struct {
 func NewPromo(ctx context.Context, pool *pgxpool.Pool, log zerolog.Logger) *Review {
 	return &Review{ctx: ctx, pool: pool, log: log}
 }
+
+func (r *Review) GetReviewByID(ctx context.Context, ID uuid.UUID) (*dto.Review, error) {
+	q := `SELECT id, product_id, user_id, rate, review_text, created_at FROM reviews WHERE id = $1`
+
+	rows, err := r.pool.Query(ctx, q, ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	pr, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[dto.Review])
+	if err != nil {
+		return nil, err
+	}
+
+	return &pr, nil
+}
+
 func (r *Review) GetReviews(ctx context.Context, productID uuid.UUID) (*[]dto.Review, error) {
 	q := `SELECT * FROM reviews WHERE product_id = $1`
 	rows, err := r.pool.Query(ctx, q, productID)
@@ -36,9 +53,37 @@ func (r *Review) GetReviews(ctx context.Context, productID uuid.UUID) (*[]dto.Re
 	return &pr, nil
 }
 
+func (r *Review) GetProductRate(ctx context.Context, productID uuid.UUID) (float32, error) {
+	q := `SELECT rate FROM reviews WHERE reviews.product_id = $1`
+	rows, err := r.pool.Query(ctx, q, productID)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var sum float32
+	var count int
+	for rows.Next() {
+		var rate float32
+		if err := rows.Scan(&rate); err != nil {
+			return 0, err
+		}
+		sum += rate
+		count++
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+
+	if count == 0 {
+		return 0, nil
+	}
+	average := sum / float32(count)
+	return average, nil
+}
+
 func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
 	q := `INSERT INTO reviews (id, type, created_at, updated_at, product_id, user_id, review_text, media, rate, status) VALUES (@id, @type, @created_at, @updated_at, @product_id, @user_id, @review_text, @media, @rate, @status)`
-	media, err := json.Marshal(&review.Media)
 	args := pgx.NamedArgs{
 		"id":          uuid.New(),
 		"type":        "review",
@@ -47,11 +92,11 @@ func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
 		"product_id":  review.ProductId,
 		"user_id":     review.UserID,
 		"review_text": review.ReviewText,
-		"media":       media,
+		"media":       review.Media,
 		"rate":        review.Rate,
 		"status":      "created",
 	}
-	_, err = r.pool.Exec(ctx, q, args)
+	_, err := r.pool.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("unable to insert row: %w", err)
 	}
@@ -59,7 +104,7 @@ func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
 }
 
 func (r *Review) EditReview(ctx context.Context, review dto.Review) error {
-	q := `UPDATE reviews SET (review_text, media, rate) = (@review_text, @media, @rate) WHERE id = @id`
+	q := `UPDATE reviews SET review_text = @review_text, media = @media, rate = @rate WHERE id = @id;`
 	args := pgx.NamedArgs{
 		"id":          review.ID,
 		"review_text": review.ReviewText,

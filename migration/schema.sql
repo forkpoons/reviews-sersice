@@ -9,7 +9,7 @@ CREATE TABLE "reviews"
     "product_id"  uuid,
     "user_id"     uuid    NOT NULL,
     "review_text" varchar NOT NULL,
-    "media"       jsonb   NOT NULL,
+    "media"       varchar   NOT NULL,
     "rate"        int,
     "status"      reviews_status
 );

@@ -5,6 +5,7 @@ go 1.23.4
 require (
 	github.com/fasthttp/router v1.5.4
 	github.com/forkpoons/library v0.0.0-20250220174145-4a6fd33c3e82
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/prometheus/client_golang v1.20.5

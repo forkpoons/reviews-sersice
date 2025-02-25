@@ -17,6 +17,7 @@ type reviewRepo interface {
 	AddReview(ctx context.Context, review dto.Review) error
 	EditReview(ctx context.Context, review dto.Review) error
 	DeleteReview(ctx context.Context, id uuid.UUID) error
+	GetProductRate(ctx context.Context, productID uuid.UUID) (float32, error)
 }
 
 type Service struct {
@@ -36,7 +37,9 @@ func NewService(log zerolog.Logger, reviewRepo reviewRepo, appSecret string) *Se
 	r.POST("/api/review", s.AddReview)
 	r.PUT("/api/review", s.EditReview)
 	r.DELETE("/api/review", s.DeleteReview)
-	r.GET("/api/reviews", s.GetReview)
+	r.GET("/api/reviews", s.GetReviews)
+	r.GET("/api/review", s.GetReviewByID)
+	r.GET("/api/rate", s.GetRate)
 
 	s.r = r
 	return &s
@@ -62,7 +65,7 @@ func (s *Service) Start(ctx context.Context) error {
 	}
 }
 
-func (s *Service) GetReview(ctx *fasthttp.RequestCtx) {
+func (s *Service) GetReviewByID(ctx *fasthttp.RequestCtx) {
 	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
 	if err != nil {
 
@@ -70,6 +73,38 @@ func (s *Service) GetReview(ctx *fasthttp.RequestCtx) {
 	review, err := s.reviewRepo.GetReviews(ctx, productID)
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+		return
+	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetBody(data)
+}
+
+func (s *Service) GetReviews(ctx *fasthttp.RequestCtx) {
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	if err != nil {
+
+	}
+	review, err := s.reviewRepo.GetReviews(ctx, productID)
+	ctx.SetContentType("application/json")
+	data, err := json.Marshal(review)
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+		return
+	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetBody(data)
+}
+
+func (s *Service) GetRate(ctx *fasthttp.RequestCtx) {
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	if err != nil {
+
+	}
+	rate, err := s.reviewRepo.GetProductRate(ctx, productID)
+	ctx.SetContentType("application/json")
+	data, err := json.Marshal(rate)
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 		return

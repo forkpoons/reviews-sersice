@@ -14,7 +14,7 @@ func (s *Service) GetReviewByID(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetReviews(ctx, productID)
+	review, err := s.reviewRepo.GetReviewByID(ctx, productID)
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -31,8 +31,24 @@ func (s *Service) GetReviews(ctx *fasthttp.RequestCtx) {
 
 	}
 	review, err := s.reviewRepo.GetReviews(ctx, productID)
+	var reviewPublished []dto.Review
+	for _, r := range *review {
+		if r.Status == "published" {
+			reviewPublished = append(reviewPublished, dto.Review{
+				ID:         r.ID,
+				CreatedAt:  r.CreatedAt,
+				UpdatedAt:  r.UpdatedAt,
+				ProductId:  r.ProductId,
+				UserID:     r.UserID,
+				ReviewText: r.ReviewText,
+				Media:      r.Media,
+				Rate:       r.Rate,
+				Status:     r.Status,
+			})
+		}
+	}
 	ctx.SetContentType("application/json")
-	data, err := json.Marshal(review)
+	data, err := json.Marshal(reviewPublished)
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 		return
@@ -66,8 +82,14 @@ func (s *Service) AddReview(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
-
-	err := s.reviewRepo.AddReview(ctx, review)
+	var err error
+	review.UserID, err = uuid.Parse(ctx.UserValue("uid").(string))
+	if err != nil {
+		s.log.Error().Err(err).Send()
+		ctx.Response.SetStatusCode(http.StatusBadRequest)
+		return
+	}
+	err = s.reviewRepo.AddReview(ctx, review)
 	if err != nil {
 		return
 	}

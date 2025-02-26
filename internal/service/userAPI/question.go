@@ -44,14 +44,14 @@ func (s *Service) GetQuestions(ctx *fasthttp.RequestCtx) {
 func (s *Service) AddQuestion(ctx *fasthttp.RequestCtx) {
 	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
 	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{}
+	review := dto.Question{}
 	if err := decoder.Decode(&review); err != nil {
 		s.log.Error().Err(err).Send()
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
-	err := s.reviewRepo.AddReview(ctx, review)
+	err := s.reviewRepo.AddQuestion(ctx, review)
 	if err != nil {
 		return
 	}
@@ -62,14 +62,14 @@ func (s *Service) AddQuestion(ctx *fasthttp.RequestCtx) {
 func (s *Service) EditQuestion(ctx *fasthttp.RequestCtx) {
 	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
 	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{}
+	review := dto.Question{}
 	if err := decoder.Decode(&review); err != nil {
 		s.log.Error().Err(err).Send()
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
-	err := s.reviewRepo.EditReview(ctx, review)
+	err := s.reviewRepo.EditQuestion(ctx, review)
 	if err != nil {
 		return
 	}
@@ -91,12 +91,12 @@ func (s *Service) DeleteQuestion(ctx *fasthttp.RequestCtx) {
 	ctx.Response.SetStatusCode(http.StatusCreated)
 }
 
-func (s *Service) GetAnswer(ctx *fasthttp.RequestCtx) {
+func (s *Service) GetQuestion(ctx *fasthttp.RequestCtx) {
 	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetReviews(ctx, productID)
+	review, err := s.reviewRepo.GetQuestions(ctx, productID)
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -110,14 +110,14 @@ func (s *Service) GetAnswer(ctx *fasthttp.RequestCtx) {
 func (s *Service) AddAnswer(ctx *fasthttp.RequestCtx) {
 	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
 	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{}
-	if err := decoder.Decode(&review); err != nil {
+	answer := dto.Answer{}
+	if err := decoder.Decode(&answer); err != nil {
 		s.log.Error().Err(err).Send()
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
-	err := s.reviewRepo.AddReview(ctx, review)
+	err := s.reviewRepo.AddAnswer(ctx, answer)
 	if err != nil {
 		return
 	}

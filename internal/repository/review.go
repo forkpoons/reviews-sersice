@@ -21,8 +21,8 @@ func NewPromo(ctx context.Context, pool *pgxpool.Pool, log zerolog.Logger) *Revi
 	return &Review{ctx: ctx, pool: pool, log: log}
 }
 
-func (r *Review) GetReviewByID(ctx context.Context, ID uuid.UUID) (*dto.Review, error) {
-	q := `SELECT id, product_id, user_id, rate, review_text, created_at FROM reviews WHERE id = $1`
+func (r *Review) GetReviewByID(ctx context.Context, ID uuid.UUID) (*dto.ReviewDB, error) {
+	q := `SELECT * FROM reviews WHERE id = $1`
 
 	rows, err := r.pool.Query(ctx, q, ID)
 	if err != nil {
@@ -30,7 +30,7 @@ func (r *Review) GetReviewByID(ctx context.Context, ID uuid.UUID) (*dto.Review, 
 	}
 	defer rows.Close()
 
-	pr, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[dto.Review])
+	pr, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[dto.ReviewDB])
 	if err != nil {
 		return nil, err
 	}
@@ -38,23 +38,24 @@ func (r *Review) GetReviewByID(ctx context.Context, ID uuid.UUID) (*dto.Review, 
 	return &pr, nil
 }
 
-func (r *Review) GetReviews(ctx context.Context, productID uuid.UUID) (*[]dto.Review, error) {
-	q := `SELECT * FROM reviews WHERE product_id = $1`
+func (r *Review) GetReviews(ctx context.Context, productID uuid.UUID) (*[]dto.ReviewDB, error) {
+	q := `SELECT * FROM reviews WHERE product_id = $1 AND rtype = 'review'`
 	rows, err := r.pool.Query(ctx, q, productID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+	rdb, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.ReviewDB])
 
-	pr, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.Review])
 	if err != nil {
+		r.log.Debug().Err(err).Send()
 		return nil, err
 	}
-	return &pr, nil
+	return &rdb, nil
 }
 
 func (r *Review) GetProductRate(ctx context.Context, productID uuid.UUID) (float32, error) {
-	q := `SELECT rate FROM reviews WHERE reviews.product_id = $1`
+	q := `SELECT rate FROM reviews WHERE product_id = $1 AND rtype = 'review' AND status = 'published'`
 	rows, err := r.pool.Query(ctx, q, productID)
 	if err != nil {
 		return 0, err
@@ -83,7 +84,7 @@ func (r *Review) GetProductRate(ctx context.Context, productID uuid.UUID) (float
 }
 
 func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
-	q := `INSERT INTO reviews (id, type, created_at, updated_at, product_id, user_id, review_text, media, rate, status) VALUES (@id, @type, @created_at, @updated_at, @product_id, @user_id, @review_text, @media, @rate, @status)`
+	q := `INSERT INTO reviews (id, rtype, created_at, updated_at, product_id, user_id, review_text, media, rate, status) VALUES (@id, @type, @created_at, @updated_at, @product_id, @user_id, @review_text, @media, @rate, @status)`
 	args := pgx.NamedArgs{
 		"id":          uuid.New(),
 		"type":        "review",
@@ -104,10 +105,11 @@ func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
 }
 
 func (r *Review) EditReview(ctx context.Context, review dto.Review) error {
-	q := `UPDATE reviews SET review_text = @review_text, media = @media, rate = @rate WHERE id = @id;`
+	q := `UPDATE reviews SET updated_at = @updated_at, review_text = @review_text, media = @media, rate = @rate WHERE id = @id;`
 	args := pgx.NamedArgs{
 		"id":          review.ID,
 		"review_text": review.ReviewText,
+		"updated_at":  time.Now(),
 		"media":       review.Media,
 		"rate":        review.Rate,
 	}

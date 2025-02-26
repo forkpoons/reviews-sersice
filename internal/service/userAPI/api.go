@@ -36,23 +36,23 @@ func NewService(log zerolog.Logger, reviewRepo reviewRepo, appSecret string) *Se
 		reviewRepo: reviewRepo,
 		appSecret:  appSecret,
 	}
-	r.POST("/api/review", s.auth(s.AddReview))
-	r.PUT("/api/review", s.auth(s.EditReview))
-	r.DELETE("/api/review", s.auth(s.DeleteReview))
+	r.POST("/api/review", s.AddReview)
+	r.PUT("/api/review", s.EditReview)
+	r.DELETE("/api/review", s.DeleteReview)
 	r.GET("/api/reviews", s.GetReviews)
 	r.GET("/api/review", s.GetReviewByID)
 
 	r.GET("/api/rate", s.GetRate)
 
-	r.POST("/api/question", s.auth(s.AddQuestion))
-	r.PUT("/api/question", s.auth(s.EditReview))
-	r.DELETE("/api/question", s.auth(s.DeleteReview))
+	r.POST("/api/question", s.AddQuestion)
+	r.PUT("/api/question", s.EditReview)
+	r.DELETE("/api/question", s.DeleteReview)
 	r.GET("/api/questions", s.GetQuestion)
 	r.GET("/api/question", s.GetReviewByID)
 
-	r.POST("/api/answer", s.auth(s.AddAnswer))
-	r.PUT("/api/answer", s.auth(s.EditReview))
-	r.DELETE("/api/answer", s.auth(s.DeleteReview))
+	r.POST("/api/answer", s.AddAnswer)
+	r.PUT("/api/answer", s.EditReview)
+	r.DELETE("/api/answer", s.DeleteReview)
 
 	s.r = r
 	return &s

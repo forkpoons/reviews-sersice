@@ -9,7 +9,7 @@ CREATE TABLE "reviews"
     "product_id"  uuid,
     "user_id"     uuid    NOT NULL,
     "review_text" varchar NOT NULL,
-    "media"       varchar   NOT NULL,
+    "media"       varchar NOT NULL,
     "rate"        int,
     "status"      reviews_status
 );
@@ -21,6 +21,6 @@ CREATE TABLE "answers"
     "user_id"     uuid    NOT NULL,
     "created_at"  timestamptz,
     "updated_at"  timestamptz,
-    "question_id"  uuid,
+    "question_id" uuid,
     "status"      reviews_status
 );

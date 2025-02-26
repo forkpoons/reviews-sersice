@@ -30,26 +30,12 @@ func (s *Service) GetReviews(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetReviews(ctx, productID)
-	var reviewPublished []dto.Review
-	for _, r := range *review {
-		if r.Status == "published" {
-			reviewPublished = append(reviewPublished, dto.Review{
-				ID:         r.ID,
-				CreatedAt:  r.CreatedAt,
-				UpdatedAt:  r.UpdatedAt,
-				ProductId:  r.ProductId,
-				UserID:     r.UserID,
-				ReviewText: r.ReviewText,
-				Media:      r.Media,
-				Rate:       r.Rate,
-				Status:     r.Status,
-			})
-		}
-	}
+	review, err := s.reviewRepo.GetReviewsByStatus(ctx, productID, []string{"published"})
+
 	ctx.SetContentType("application/json")
-	data, err := json.Marshal(reviewPublished)
+	data, err := json.Marshal(review)
 	if err != nil {
+		s.log.Debug().Err(err).Msg("Error marshaling reviews")
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 		return
 	}
@@ -109,6 +95,9 @@ func (s *Service) EditReview(ctx *fasthttp.RequestCtx) {
 
 	err := s.reviewRepo.EditReview(ctx, review)
 	if err != nil {
+
+		s.log.Error().Err(err).Send()
+		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
@@ -121,7 +110,7 @@ func (s *Service) DeleteReview(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	err = s.reviewRepo.DeleteReview(ctx, productID)
+	err = s.reviewRepo.SetReviewStatus(ctx, productID, "deleted")
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return

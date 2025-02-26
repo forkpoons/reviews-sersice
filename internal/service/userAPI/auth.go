@@ -7,6 +7,7 @@ import (
 
 func (s *Service) auth(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
+		s.log.Debug().Str("appsecret", s.appSecret).Send()
 		token := string(ctx.Request.Header.Peek("Authorization"))
 		tokenParsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 			return []byte(s.appSecret), nil

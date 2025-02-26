@@ -14,7 +14,7 @@ func (s *Service) GetQuestionByID(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetReviews(ctx, productID)
+	review, err := s.reviewRepo.GetReviewsByStatus(ctx, productID, []string{"created", "published"})
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -30,7 +30,7 @@ func (s *Service) GetQuestions(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetReviews(ctx, productID)
+	review, err := s.reviewRepo.GetReviewsByStatus(ctx, productID, []string{"created", "published"})
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -83,7 +83,7 @@ func (s *Service) DeleteQuestion(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	err = s.reviewRepo.DeleteReview(ctx, productID)
+	err = s.reviewRepo.SetReviewStatus(ctx, productID, "deleted")
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
@@ -96,7 +96,7 @@ func (s *Service) GetQuestion(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetQuestions(ctx, productID)
+	review, err := s.reviewRepo.GetQuestionsByStatus(ctx, productID, []string{"published"})
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -140,19 +140,5 @@ func (s *Service) EditAnswer(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	ctx.Response.SetStatusCode(http.StatusCreated)
-}
-
-func (s *Service) DeleteAnswer(ctx *fasthttp.RequestCtx) {
-	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
-	if err != nil {
-		ctx.SetStatusCode(fasthttp.StatusBadRequest)
-		return
-	}
-	err = s.reviewRepo.DeleteReview(ctx, productID)
-	if err != nil {
-		ctx.SetStatusCode(fasthttp.StatusBadRequest)
-		return
-	}
 	ctx.Response.SetStatusCode(http.StatusCreated)
 }

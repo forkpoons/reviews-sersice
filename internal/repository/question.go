@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/forkpoons/reviews-sersice/internal/dto"
 	"github.com/google/uuid"
@@ -9,8 +10,17 @@ import (
 	"time"
 )
 
-func (r *Review) GetQuestions(ctx context.Context, productID uuid.UUID) (*[]dto.Question, error) {
-	q := `SELECT * FROM reviews WHERE product_id = $1 AND rtype = 'question'`
+func (r *Review) GetQuestionsByStatus(ctx context.Context, productID uuid.UUID, status []string) (*[]dto.Question, error) {
+	q := `SELECT * FROM reviews WHERE product_id = $1 AND rtype = 'question' AND status IN `
+	if len(status) < 0 {
+		return nil, errors.New(fmt.Sprintf("status is empty"))
+	}
+	statusStr := "("
+	for _, str := range status {
+		statusStr += `'` + str + `',`
+	}
+	statusStr = statusStr[:len(statusStr)-1] + `)`
+	q += statusStr
 	rows, err := r.pool.Query(ctx, q, productID)
 	if err != nil {
 		return nil, err
@@ -18,7 +28,7 @@ func (r *Review) GetQuestions(ctx context.Context, productID uuid.UUID) (*[]dto.
 	var questions []dto.Question
 	reviews, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.ReviewDB])
 	for _, review := range reviews {
-		q = `SELECT * FROM answers WHERE question_id = $1`
+		q = `SELECT * FROM answers WHERE question_id = $1 AND status IN ` + statusStr
 		answerRows, err := r.pool.Query(ctx, q, review.ID)
 		if err != nil {
 			return nil, err

@@ -14,8 +14,8 @@ type ApiConfig struct {
 }
 
 type AppConfig struct {
-	Probe  probes.ProbeConfig `yaml:"probe"`
-	Secret string             `yaml:"secret"`
+	Probe  probes.ProbeConfig   `yaml:"probe"`
+	Secret *yamlenv.Env[string] `yaml:"secret"`
 }
 
 type Config struct {

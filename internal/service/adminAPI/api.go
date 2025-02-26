@@ -1,7 +1,6 @@
 package adminAPI
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/fasthttp/router"
@@ -13,18 +12,18 @@ import (
 )
 
 type reviewRepo interface {
-	GetReviews(ctx context.Context, id uuid.UUID) (*[]dto.Review, error)
+	GetReviewsByStatus(ctx context.Context, productID uuid.UUID, status []string) (*[]dto.Review, error)
+	GetQuestionsByStatus(ctx context.Context, productID uuid.UUID, status []string) (*[]dto.Question, error)
 	AddReview(ctx context.Context, review dto.Review) error
 	EditReview(ctx context.Context, review dto.Review) error
-	DeleteReview(ctx context.Context, id uuid.UUID) error
 	GetProductRate(ctx context.Context, productID uuid.UUID) (float32, error)
+	SetReviewStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
 type Service struct {
 	r          *router.Router
 	log        zerolog.Logger
 	reviewRepo reviewRepo
-	appSecret  string
 }
 
 func NewService(log zerolog.Logger, reviewRepo reviewRepo, appSecret string) *Service {
@@ -32,10 +31,12 @@ func NewService(log zerolog.Logger, reviewRepo reviewRepo, appSecret string) *Se
 	s := Service{
 		log:        log,
 		reviewRepo: reviewRepo,
-		appSecret:  appSecret,
 	}
-	r.POST("/api/review", s.EditReview)
-
+	r.GET("/api/reviews", s.GetReviews)
+	r.GET("/api/questions", s.GetQuestion)
+	r.POST("/api/review", s.SetReviewStatus)
+	r.POST("/api/questions", s.SetQuestionStatus)
+	r.POST("/api/answer", s.SetAnswerStatus)
 	s.r = r
 	return &s
 }
@@ -43,12 +44,12 @@ func NewService(log zerolog.Logger, reviewRepo reviewRepo, appSecret string) *Se
 func (s *Service) Start(ctx context.Context) error {
 	server := fasthttp.Server{
 		Handler: s.r.Handler,
-		Name:    "Promo API",
+		Name:    "Review admin API",
 	}
 	emergencyShutdown := make(chan error)
 	go func() {
-		s.log.Info().Msgf("Starting server21321")
-		err := server.ListenAndServe(":8080")
+		s.log.Info().Msgf("Starting admin server")
+		err := server.ListenAndServe(":9090")
 		emergencyShutdown <- err
 	}()
 
@@ -60,20 +61,78 @@ func (s *Service) Start(ctx context.Context) error {
 	}
 }
 
-func (s *Service) EditReview(ctx *fasthttp.RequestCtx) {
-	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
-	s.log.Info().Msgf("Received request to add review")
-	review := dto.Review{}
-	if err := decoder.Decode(&review); err != nil {
-		s.log.Error().Err(err).Send()
-		ctx.Response.SetStatusCode(http.StatusBadRequest)
-		return
-	}
-
-	err := s.reviewRepo.EditReview(ctx, review)
+func (s *Service) GetReviews(ctx *fasthttp.RequestCtx) {
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
 	if err != nil {
+
+	}
+	review, err := s.reviewRepo.GetReviewsByStatus(ctx, productID, []string{"created", "published"})
+
+	ctx.SetContentType("application/json")
+	data, err := json.Marshal(review)
+	if err != nil {
+		s.log.Debug().Err(err).Msg("Error marshaling reviews")
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 		return
 	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetBody(data)
+}
 
+func (s *Service) GetQuestion(ctx *fasthttp.RequestCtx) {
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	if err != nil {
+
+	}
+	review, err := s.reviewRepo.GetQuestionsByStatus(ctx, productID, []string{"created", "published"})
+	ctx.SetContentType("application/json")
+	data, err := json.Marshal(review)
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+		return
+	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetBody(data)
+}
+
+func (s *Service) SetReviewStatus(ctx *fasthttp.RequestCtx) {
+	ID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("id"))
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+	err = s.reviewRepo.SetReviewStatus(ctx, ID, "deleted")
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
 	ctx.Response.SetStatusCode(http.StatusCreated)
+}
+
+func (s *Service) SetQuestionStatus(ctx *fasthttp.RequestCtx) {
+	ID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("id"))
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+	err = s.reviewRepo.SetReviewStatus(ctx, ID, "deleted")
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+	ctx.Response.SetStatusCode(http.StatusCreated)
+}
+
+func (s *Service) SetAnswerStatus(ctx *fasthttp.RequestCtx) {
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+	err = s.reviewRepo.SetReviewStatus(ctx, productID, "deleted")
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+	ctx.Response.SetStatusCode(http.StatusOK)
 }

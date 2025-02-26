@@ -5,7 +5,8 @@ import (
 	"flag"
 	"github.com/forkpoons/reviews-sersice/internal/config"
 	"github.com/forkpoons/reviews-sersice/internal/repository"
-	apiService "github.com/forkpoons/reviews-sersice/internal/service/userAPI"
+	apiAdmin "github.com/forkpoons/reviews-sersice/internal/service/adminAPI"
+	apiUser "github.com/forkpoons/reviews-sersice/internal/service/userAPI"
 	"github.com/rs/zerolog"
 	"os"
 	"os/signal"
@@ -37,8 +38,10 @@ func main() {
 		zerohook.Logger.Fatal().Msgf("Error starting probe: %v", err)
 	}
 	zerohook.Logger.Debug().Msgf("Starting server")
-	api := apiService.NewService(zerohook.Logger, promoRepo, cfg.App.Secret)
+	api := apiUser.NewService(zerohook.Logger, promoRepo, cfg.App.Secret.Value)
 	go api.Start(ctx)
+	apiAdm := apiAdmin.NewService(zerohook.Logger, promoRepo, cfg.App.Secret.Value)
+	go apiAdm.Start(ctx)
 	if err != nil {
 		zerohook.Logger.Fatal().Msgf("Error starting API: %v", err)
 	}

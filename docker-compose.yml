@@ -26,8 +26,10 @@ services:
       - ./:/app
     ports:
       - "8080:8080"
+      - "9090:9090"
     expose:
       - 8080
+      - 9090
     tty: true
 
   postgres:

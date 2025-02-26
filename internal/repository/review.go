@@ -38,8 +38,12 @@ func (r *Review) GetReviewByID(ctx context.Context, ID uuid.UUID) (*dto.ReviewDB
 	return &pr, nil
 }
 
-func (r *Review) GetReviews(ctx context.Context, productID uuid.UUID) (*[]dto.ReviewDB, error) {
-	q := `SELECT * FROM reviews WHERE product_id = $1 AND rtype = 'review'`
+func (r *Review) GetReviewsByStatus(ctx context.Context, productID uuid.UUID, status []string) (*[]dto.Review, error) {
+	q := `SELECT * FROM reviews WHERE product_id = $1 AND rtype = 'review' AND status IN (`
+	for _, str := range status {
+		q += `'` + str + `',`
+	}
+	q = q[:len(q)-1] + `)`
 	rows, err := r.pool.Query(ctx, q, productID)
 	if err != nil {
 		return nil, err
@@ -51,7 +55,21 @@ func (r *Review) GetReviews(ctx context.Context, productID uuid.UUID) (*[]dto.Re
 		r.log.Debug().Err(err).Send()
 		return nil, err
 	}
-	return &rdb, nil
+	var reviews []dto.Review
+	for _, review := range rdb {
+		reviews = append(reviews, dto.Review{
+			ID:         review.ID,
+			CreatedAt:  review.CreatedAt,
+			UpdatedAt:  review.UpdatedAt,
+			ProductId:  review.ProductId,
+			UserID:     review.UserID,
+			ReviewText: review.ReviewText,
+			Media:      review.Media,
+			Rate:       review.Rate,
+			Status:     review.Status,
+		})
+	}
+	return &reviews, nil
 }
 
 func (r *Review) GetProductRate(ctx context.Context, productID uuid.UUID) (float32, error) {
@@ -84,7 +102,7 @@ func (r *Review) GetProductRate(ctx context.Context, productID uuid.UUID) (float
 }
 
 func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
-	q := `INSERT INTO reviews (id, rtype, created_at, updated_at, product_id, user_id, review_text, media, rate, status) VALUES (@id, @type, @created_at, @updated_at, @product_id, @user_id, @review_text, @media, @rate, @status)`
+	q := `INSERT INTO reviews (id, rtype, created_at, updated_at, product_id, user_id, review_text, media, rate, status) VALUES (@id, @rtype, @created_at, @updated_at, @product_id, @user_id, @review_text, @media, @rate, @status)`
 	args := pgx.NamedArgs{
 		"id":          uuid.New(),
 		"type":        "review",
@@ -120,10 +138,10 @@ func (r *Review) EditReview(ctx context.Context, review dto.Review) error {
 	return nil
 }
 
-func (r *Review) DeleteReview(ctx context.Context, id uuid.UUID) error {
-	q := `UPDATE reviews SET status = 'deleted' WHERE id = $1`
+func (r *Review) SetReviewStatus(ctx context.Context, id uuid.UUID, status string) error {
+	q := `UPDATE reviews SET status = $1 WHERE id = $2`
 
-	_, err := r.pool.Exec(ctx, q, id)
+	_, err := r.pool.Exec(ctx, q, status, id)
 	if err != nil {
 		return err
 	}

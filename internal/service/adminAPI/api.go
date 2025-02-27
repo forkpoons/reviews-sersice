@@ -18,6 +18,7 @@ type reviewRepo interface {
 	EditReview(ctx context.Context, review dto.Review) error
 	GetProductRate(ctx context.Context, productID uuid.UUID) (float32, error)
 	SetReviewStatus(ctx context.Context, id uuid.UUID, status string) error
+	SetAnswerStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
 type Service struct {
@@ -34,9 +35,9 @@ func NewService(log zerolog.Logger, reviewRepo reviewRepo, appSecret string) *Se
 	}
 	r.GET("/api/reviews", s.GetReviews)
 	r.GET("/api/questions", s.GetQuestion)
-	r.POST("/api/review", s.SetReviewStatus)
-	r.POST("/api/questions", s.SetQuestionStatus)
-	r.POST("/api/answer", s.SetAnswerStatus)
+	r.PUT("/api/review", s.SetReviewStatus)
+	r.PUT("/api/questions", s.SetQuestionStatus)
+	r.PUT("/api/answer", s.SetAnswerStatus)
 	s.r = r
 	return &s
 }
@@ -101,12 +102,13 @@ func (s *Service) SetReviewStatus(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	err = s.reviewRepo.SetReviewStatus(ctx, ID, "deleted")
+	status := ctx.QueryArgs().Peek("status")
+	err = s.reviewRepo.SetReviewStatus(ctx, ID, string(status))
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	ctx.Response.SetStatusCode(http.StatusCreated)
+	ctx.Response.SetStatusCode(http.StatusOK)
 }
 
 func (s *Service) SetQuestionStatus(ctx *fasthttp.RequestCtx) {
@@ -115,21 +117,23 @@ func (s *Service) SetQuestionStatus(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	err = s.reviewRepo.SetReviewStatus(ctx, ID, "deleted")
+	status := ctx.QueryArgs().Peek("status")
+	err = s.reviewRepo.SetReviewStatus(ctx, ID, string(status))
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	ctx.Response.SetStatusCode(http.StatusCreated)
+	ctx.Response.SetStatusCode(http.StatusOK)
 }
 
 func (s *Service) SetAnswerStatus(ctx *fasthttp.RequestCtx) {
-	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	ID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("id"))
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	err = s.reviewRepo.SetReviewStatus(ctx, productID, "deleted")
+	status := ctx.QueryArgs().Peek("status")
+	err = s.reviewRepo.SetAnswerStatus(ctx, ID, string(status))
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return

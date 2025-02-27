@@ -100,3 +100,13 @@ func (r *Review) AddAnswer(ctx context.Context, answer dto.Answer) error {
 	}
 	return nil
 }
+
+func (r *Review) SetAnswerStatus(ctx context.Context, id uuid.UUID, status string) error {
+	q := `UPDATE answers SET status = $1 WHERE id = $2`
+
+	_, err := r.pool.Exec(ctx, q, status, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}

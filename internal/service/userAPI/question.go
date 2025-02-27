@@ -50,8 +50,14 @@ func (s *Service) AddQuestion(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
-
-	err := s.reviewRepo.AddQuestion(ctx, review)
+	var err error
+	review.UserID, err = uuid.Parse(ctx.UserValue("uid").(string))
+	if err != nil {
+		s.log.Error().Err(err).Send()
+		ctx.Response.SetStatusCode(http.StatusBadRequest)
+		return
+	}
+	err = s.reviewRepo.AddQuestion(ctx, review)
 	if err != nil {
 		return
 	}
@@ -78,7 +84,7 @@ func (s *Service) EditQuestion(ctx *fasthttp.RequestCtx) {
 }
 
 func (s *Service) DeleteQuestion(ctx *fasthttp.RequestCtx) {
-	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("id"))
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
@@ -92,11 +98,11 @@ func (s *Service) DeleteQuestion(ctx *fasthttp.RequestCtx) {
 }
 
 func (s *Service) GetQuestion(ctx *fasthttp.RequestCtx) {
-	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	ID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("id"))
 	if err != nil {
 
 	}
-	review, err := s.reviewRepo.GetQuestionsByStatus(ctx, productID, []string{"published"})
+	review, err := s.reviewRepo.GetQuestionsByStatus(ctx, ID, []string{"published"})
 	ctx.SetContentType("application/json")
 	data, err := json.Marshal(review)
 	if err != nil {
@@ -116,8 +122,14 @@ func (s *Service) AddAnswer(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
-
-	err := s.reviewRepo.AddAnswer(ctx, answer)
+	var err error
+	answer.UserID, err = uuid.Parse(ctx.UserValue("uid").(string))
+	if err != nil {
+		s.log.Error().Err(err).Send()
+		ctx.Response.SetStatusCode(http.StatusBadRequest)
+		return
+	}
+	err = s.reviewRepo.AddAnswer(ctx, answer)
 	if err != nil {
 		return
 	}

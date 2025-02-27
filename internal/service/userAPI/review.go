@@ -85,7 +85,6 @@ func (s *Service) AddReview(ctx *fasthttp.RequestCtx) {
 
 func (s *Service) EditReview(ctx *fasthttp.RequestCtx) {
 	decoder := json.NewDecoder(bytes.NewReader(ctx.PostBody()))
-	s.log.Info().Msgf("Received request to add review")
 	review := dto.Review{}
 	if err := decoder.Decode(&review); err != nil {
 		s.log.Error().Err(err).Send()
@@ -101,11 +100,11 @@ func (s *Service) EditReview(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	ctx.Response.SetStatusCode(http.StatusCreated)
+	ctx.Response.SetStatusCode(http.StatusOK)
 }
 
 func (s *Service) DeleteReview(ctx *fasthttp.RequestCtx) {
-	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("product_id"))
+	productID, err := uuid.ParseBytes(ctx.QueryArgs().Peek("id"))
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
@@ -115,5 +114,5 @@ func (s *Service) DeleteReview(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-	ctx.Response.SetStatusCode(http.StatusCreated)
+	ctx.Response.SetStatusCode(http.StatusOK)
 }

@@ -105,7 +105,7 @@ func (r *Review) AddReview(ctx context.Context, review dto.Review) error {
 	q := `INSERT INTO reviews (id, rtype, created_at, updated_at, product_id, user_id, review_text, media, rate, status) VALUES (@id, @rtype, @created_at, @updated_at, @product_id, @user_id, @review_text, @media, @rate, @status)`
 	args := pgx.NamedArgs{
 		"id":          uuid.New(),
-		"type":        "review",
+		"rtype":       "review",
 		"created_at":  time.Now(),
 		"updated_at":  time.Now(),
 		"product_id":  review.ProductId,
